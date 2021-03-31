@@ -43,7 +43,7 @@ docker pull NAME[:TAG]
 
 进入 https://hub.docker.com/_/centos?tab=tags 可以查看 Docker Hub 中可用的镜像，若不指定标签则是下载 lastest。
 
-![查看 Docker Hub 中可用的镜像](../image/docker/查看 Docker Hub 中可用的镜像.png)
+![查看 Docker Hub 中可用的镜像](../image/docker/查看DockerHub中可用的镜像.png)
 
 案例演示下载 CentOS 7
 
