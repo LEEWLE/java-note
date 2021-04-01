@@ -285,6 +285,8 @@ docker load --input 存出的文件
 docker load < 存出文件
 ```
 
+载入镜像也可以使用 `docker import`，但这是导入一个容器快照到本地镜像库，快照文件会丢弃所有的历史记录和元数据信息，而 `docker load` 是导入镜像存储文件到本地镜像库，会完成保存记录
+
 实例：加上面存出的 mysql 重新导入
 
 ```shell
@@ -308,11 +310,268 @@ docker push NAME[:TAG]
 docker push docker.io/mysql:latest
 ```
 
+### 容器
 
+#### 创建容器
 
+**新建容器**
 
+使用如下命令新建的容器处于停止状态
 
+```shell
+docker create [OPTIONS] IMAGE [命令] [参数...]
+```
 
+常用参数列表
 
+| 参数 | 作用                                          |
+| ---- | --------------------------------------------- |
+| -t   | Docker 分配一个伪终端并绑定到容器的标准输入上 |
+| -i   | 让容器的标准输入保持打开                      |
 
+实例：创建一个 centos:7 的容器
+
+```shell
+docker create -it centos:7
+```
+
+查看容器列表
+
+```shell
+docker ps -a
+
+CONTAINER ID        IMAGE               COMMAND                  CREATED             STATUS                    PORTS               NAMES
+c13dced07d8c        centos:7            "/bin/bash"              28 minutes ago      Created                                       lucid_beaver
+7e360727c953        mysql               "docker-entrypoint..."   16 hours ago        Exited (0) 16 hours ago                       xenodochial_kirch
+```
+
+由于容器是停止状态，若需要启动则需要使用如下命令
+
+```sh
+docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+```
+
+实例：启动上述创建的 centos:7 容器
+
+```shell
+docker start c13dced07d8c
+```
+
+注意若在创建容器时没有加 `-it` 参数，则使用 `docker ps` 时查看不到正在运行的容器，这是由于启动后若没有操作则会被杀掉
+
+```shell
+[root@VM-0-14-centos ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+e60a12a43c6a        centos:7            "/bin/bash"         4 minutes ago       Up 4 minutes                            boring_euclid
+d046c69f851c        centos:7            "/bin/bash"         4 minutes ago       Up 4 minutes                            boring_rosalind
+```
+
+**新建并启动容器**
+
+启动容器主要是两种方式，一种是基于镜像新建一个容器并启动，另一个则是将终止状态的容器重新启动
+
+命令格式如下：
+
+```shell
+docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
+```
+
+| 参数 | 作用                                          |
+| ---- | --------------------------------------------- |
+| -t   | Docker 分配一个伪终端并绑定到容器的标准输入上 |
+| -i   | 让容器的标准输入保持打开                      |
+| -d   | 容器在后台以守护态的方式运行                  |
+
+当用该命令时，后台会有如下操作：
+
+1. 检查本地是否存在指定镜像，不存在就从公有仓库下载
+2. 利用镜像创建并启动一个容器
+3. 分配一个文件系统，并在只读的镜像层外面挂载一层可读写层
+4. 从宿主主机配置的网桥接口中桥接一个虚拟接口到容器中去
+5. 从地址池配置一个 IP 地址给容器
+6. 执行用户指定的应用程序
+7. 执行完毕后容器被终止
+
+**实例：启动一个 centos 容器并启动 bash 终端**
+
+```shell
+docker run -it centos:7 /bin/bash
+```
+
+在该命令后会进入交互模式，用户可以通过所创建的终端来输入命令，例如 `ls、ps` 等
+
+若退出容器则可以使用 `ctrl + d` 或 输入 `exit` 来退出容器，退出容器后该容器自动处于终止状态
+
+**实例：启动 centos 容器并后台运行**
+
+```shell
+docker run -d centos:7
+```
+
+若是容器有输出信息的存在，那么可以使用 `docker logs [OPTIONS] CONTAINER` 查看
+
+#### 终止容器
+
+**停止容器**
+
+使用如下命令首先会向容器发生 SIGTERM 信号，等待一段时间后（默认10秒钟，可以使用 `-t=时间数` 参数进行设置），然后再发生 SIGKILL 信号终止容器。若 Docker 容器中指定的应用终结时，容器也将自动终止
+
+```shell
+docker stop [OPTIONS] CONTAINER [CONTAINER...]
+```
+
+**实例：停止 centos:7 容器**
+
+查询系统中启动的容器
+
+```shell
+[root@VM-0-14-centos ~]# docker ps
+CONTAINER ID        IMAGE               COMMAND             CREATED             STATUS              PORTS               NAMES
+db6988c79c79        centos:7            "/bin/bash"         45 minutes ago      Up 45 minutes                           awesome_babbage
+e60a12a43c6a        centos:7            "/bin/bash"         53 minutes ago      Up 53 minutes                           boring_euclid
+d046c69f851c        centos:7            "/bin/bash"         53 minutes ago      Up 53 minutes                           boring_rosalind
+```
+
+停止第一个 centos:7 容器
+
+```shell
+[root@VM-0-14-centos ~]# docker stop db6988c79c79
+db6988c79c79
+```
+
+再使用 `docker ps` 查询运行中的容器会发现少一条记录
+
+**重启容器**
+
+```shell
+docker restart [OPTIONS] CONTAINER [CONTAINER...]
+```
+
+**开启容器**
+
+```shell
+docker start [OPTIONS] CONTAINER [CONTAINER...]
+```
+
+#### 进入容器
+
+**attach 命令**
+
+```shell
+docker attach [OPTIONS] CONTAINER
+```
+
+实例：进入上面创建的 centos:7 容器
+
+```
+[root@VM-0-14-centos ~]# docker attach e60a12a43c6a
+[root@e60a12a43c6a /]# 
+```
+
+局限性：当多个窗口同时 attach 同一个容器时，所有窗口都会同步显示。当某个窗口因命令阻塞时，其他窗口也无法执行命令
+
+**exec 命令**
+
+```shell
+docker exec [OPTIONS] CONTAINER COMMAND [ARG...]
+```
+
+实例：进入上面创建的 centos:7 容器
+
+```shell
+docker exec -it d046c69f851c /bin/bash
+```
+
+**nsenter 工具**
+
+获取容器的进程 Id
+
+```shell
+docker inspect -f {{.State.Pid }} 容器
+```
+
+通过进程 id 进入容器
+
+```shell
+nsenter --target 进程id --mount --uts --ipc --net --pid
+```
+
+实例：进入上面创建的 centos:7 容器
+
+查询进程 id
+
+```shell
+[root@VM-0-14-centos ~]# docker inspect -f {{.State.Pid}} d046c69f851c
+25678
+```
+
+ 进入容器
+
+```shell
+[root@VM-0-14-centos ~]# nsenter --target 25678 --mount --uts --ipc --net --pid
+[root@d046c69f851c /]#
+```
+
+#### 删除容器
+
+如下命令不加参数是删除处于终止状态的容器
+
+```shell
+docker rm [OPTIONS] CONTAINER [CONTAINER...]
+```
+
+常用参数
+
+| 参数 | 格式                           |
+| ---- | ------------------------------ |
+| -f   | 强制终止并删除一个运行中的容器 |
+| -l   | 删除容器的连接，但保留容器     |
+| -v   | 删除容器挂载的数据卷           |
+
+#### 导入和导出容器 
+
+**导出容器**
+
+```shell
+docker export [OPTIONS] CONTAINER
+```
+
+查询所有的容器
+
+```shell
+[root@VM-0-14-centos ~]# docker ps -a
+CONTAINER ID        IMAGE                COMMAND                  CREATED             STATUS                     PORTS               NAMES
+d6a53789b947        centos:7             "/bin/bash"              3 hours ago         Exited (127) 3 hours ago                       quizzical_pare
+db6988c79c79        centos:7             "/bin/bash"              3 hours ago         Exited (137) 3 hours ago                       awesome_babbage
+e60a12a43c6a        centos:7             "/bin/bash"              4 hours ago         Exited (0) 2 hours ago                         boring_euclid
+```
+
+实例：导出第一个 centos:7
+
+```shell
+docker export d6a53789b947 > centos.tar
+```
+
+**导入容器**
+
+使用下述命令可以将导出的文件导入成为镜像
+
+```sh
+docker import [OPTIONS] file|URL|- [REPOSITORY[:TAG]]
+```
+
+实例：导入上述导出的 centos.tar 并设置标签信息
+
+```shell
+docker import centos.tar centos:7.x
+```
+
+查看镜像列表其中就有导入的 centos:7.x
+
+```shell
+[root@VM-0-14-centos ~]# docker images
+REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
+centos              7.x                 32b1b693c49c        39 seconds ago      204 MB
+test                latest              1656bc6990b0        21 hours ago        546 MB
+```
 
