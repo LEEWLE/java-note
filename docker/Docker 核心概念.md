@@ -264,6 +264,79 @@ docker.io/mysql     latest              e646c6533b0b        4 hours ago         
 cat 文件名.tar.gz | docker import - NAME:TAG
 ```
 
+**Dockerfile 创建镜像**
+
+基本结构
+
+- 镜像基础信息
+- 维护者信息
+- 镜像操作指令
+- 容器启动时执行指令
+
+```shell
+# 第一行必须指定基于的基础镜像
+FROM ubuntu
+# 维护者信息
+MAINTAINER docker_user docker_user@email.com
+# 镜像的操作指令
+RUN echo "deb http://archive.ubuntu.com/ubuntu/ raring main universe" /etcl apt/sources.list
+RUN apt-get update && apt-get install -y nginx RUN echo"\ndaemon off;">>/etc/nginx/nginx.conf
+# 容器启动时执行指令
+CMD /usr/sbin/nginx
+```
+
+指令
+
+**FROM**
+
+格式：`FROM IMAGE 或 FROM IMAGE:TAG`
+
+第一条指令必须是 FROM 指令，如果一个 Dockerfile 中创建多个镜像时，可以使用多个 FROM 指令
+
+**MAINTAINER**
+
+格式为`MAINTAINER NAME`，指定维护者信息
+
+**RUN**
+
+格式为 `RUN <command>` 或 `RUN ["executable", "param1", "param2"]`
+
+前者将在 shell 终端中运行命令，后者使用 exec 执行
+
+**CMD**
+
+格式为:
+
+1. `CMD ["executable", "param1", "param2"]`：使用 exec 执行
+2. `CMD command param1 param2`：在 /bin/bash 中执行，提供给需要交互的作用
+3. `CMD ["param1", "param2"]`：提供给 ENTRYPOINT 的默认参数
+
+指定启动容器执行的命令，每个 Dockerfile 只能有一条 CMD，指定多了会执行最后一条
+
+**EXPOSE**
+
+格式为 `EXPOSE <port> [<port>...]`，告诉 Docker 服务端容器暴露的端口号，供互联网使用
+
+**ENV**
+
+格式为 `ENV <key> <value>`，指定一个环境变量，会被后续 RUN 指令使用，并在容器运行时保持
+
+**ADD**
+
+格式为 `ADD <src> <dest>`
+
+**COPY**
+
+**ENTRYPOINT**
+
+**VOLUME**
+
+**USER**
+
+**WORKDIR**
+
+**ONBUILD**
+
 #### 存出和载入镜像
 
 **存储镜像**
@@ -573,5 +646,21 @@ docker import centos.tar centos:7.x
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
 centos              7.x                 32b1b693c49c        39 seconds ago      204 MB
 test                latest              1656bc6990b0        21 hours ago        546 MB
+```
+
+### 仓库
+
+#### 使用 registry 镜像创建私有仓库
+
+如下命令将自动下载并启动一个 registry 容器，监听端口为 5000 ，创建本地私有仓库服务，在默认情况下仓库创建在容器的 `/tmp/registry` 目录下
+
+```sh
+docker run -d -p 5000:5000 registry
+```
+
+修改镜像存放本地的路径
+
+```shell
+docker run -d -p 5000:5000 -v /opt/data/registry:/tmp/registry registry
 ```
 
