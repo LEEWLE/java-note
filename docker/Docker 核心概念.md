@@ -338,7 +338,7 @@ CMD /usr/sbin/nginx
 格式为
 
 1. `ENTRYPOINT[ "executable", "param1", "param2"]` 
-2. `ENTRYPOINTcommand paraml param2` (shell 中执行)
+2. `ENTRYPOINT command paraml param2` (shell 中执行)
 
 配置容器启动后执行的命令，并且不可被docker run提供的参数覆盖。每个Dockerfile中只能有一个ENTRYPOINT，当指定多个ENTRYPOINT时，只有最后一个生效。
 
