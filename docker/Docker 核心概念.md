@@ -204,15 +204,15 @@ Deleted: sha256:2653d992f4ef2bfd27f94db643815aa567240c37732cae1405ad1c1309ee9859
 
 #### 创建镜像
 
-**基于已有镜像的容器创建**
+##### 基于已有镜像的容器创建
 
-基本命令
+**基本命令**
 
 ```shell
 docker commit [OPTIONS] CONTAINER [REPOSITORY[:TAG]]
 ```
 
-`OPTIONS` 参数说明
+**`OPTIONS` 参数说明**
 
 | 参数             | 说明               |
 | ---------------- | ------------------ |
@@ -256,7 +256,7 @@ test                latest              1656bc6990b0        10 seconds ago      
 docker.io/mysql     latest              e646c6533b0b        4 hours ago         546 MB
 ```
 
-**基于本地模板导入**
+##### 基于本地模板导入
 
 需要先下载模板文件，再使用如下命令导入
 
@@ -264,9 +264,9 @@ docker.io/mysql     latest              e646c6533b0b        4 hours ago         
 cat 文件名.tar.gz | docker import - NAME:TAG
 ```
 
-**Dockerfile 创建镜像**
+##### Dockerfile 创建镜像
 
-基本结构
+###### 基本结构
 
 - 镜像基础信息
 - 维护者信息
@@ -285,7 +285,7 @@ RUN apt-get update && apt-get install -y nginx RUN echo"\ndaemon off;">>/etc/ngi
 CMD /usr/sbin/nginx
 ```
 
-指令
+###### 指令
 
 **FROM**
 
@@ -323,19 +323,63 @@ CMD /usr/sbin/nginx
 
 **ADD**
 
-格式为 `ADD <src> <dest>`
+格式为 `ADD <src> <dest>`，复制指定的 `<src>` 到容器中的 `<dest>`
+
+`<scr>` 可以是 Dockerfile 所在目录中的一个相对路径（文件或目录）；也可以是一个 URL；还可以是一个 tar 文件（自动解压为目录）
 
 **COPY**
 
+格式为 `COPY <src> <dest>`，复制本地主机的 `<src>` （为 Dockfile 所在目录的相对路径，文件过目录）为容器中的 `<dest>`
+
+目标路径不存在时，会自动创建。
+
 **ENTRYPOINT**
+
+格式为
+
+1. `ENTRYPOINT[ "executable", "param1", "param2"]` 
+2. `ENTRYPOINT command paraml param2` (shell 中执行)
+
+配置容器启动后执行的命令，并且不可被docker run提供的参数覆盖。每个Dockerfile中只能有一个ENTRYPOINT，当指定多个ENTRYPOINT时，只有最后一个生效。
 
 **VOLUME**
 
+格式为 `VOLUME [ "/data"]`，创建一个可以从本地主机或其他容器挂载的挂载点，一般用来存放数据库和需要保持的数据等。
+
 **USER**
+
+格式为 `USER daemon`
+
+指定运行容器时的用户名或 UID，后续的 RUN 也会使用指定用户
 
 **WORKDIR**
 
+格式为 `WORKDIR /path/to/workdir`
+为后续的`RUN、CMD、ENTRYPOINT` 指令配置工作目录。
+可以使用多个  WORKDIR 指令，后续命令如果参数是相对路径，则会基于之前命令指定的路径
+
 **ONBUILD**
+
+格式为 `ONBUILD [INSTRUCTION]`
+配置当所创建的镜像作为其他新创建镜像的基础镜像时，所执行的操作指令
+
+###### 创建镜像
+
+命令格式
+
+```shell
+docker build [OPTIONS] PATH | URL
+```
+
+该命令将读取指定路径下(包括子目录)的Dockerfile，并将该路径下所有内容发送给Docker服务端，由服务端来创建镜像。因此一般建议放置Dockerfile的目录为空目录。可以通过.dockerignore文件(每一行添加一条匹配模式) 来让Docker忽略路径下的目录和文件。
+
+实例：生成指定标签信息的镜像
+
+```shell
+# -t：指定镜像的标签信息
+# /tmp/docker_builder/  docker 文件所在目录
+docker build -t build_repo/first__image /tmp/docker_builder/
+```
 
 #### 存出和载入镜像
 
